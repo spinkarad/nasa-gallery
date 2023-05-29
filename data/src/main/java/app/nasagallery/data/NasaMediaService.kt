@@ -5,11 +5,9 @@ import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-private const val API_KEY = "lpUUk8oiNMul7KLrkOj68TV7Z9QgROkj4jefnCGD"
-
 interface NasaMediaService {
 
-    @GET("/planetary/apod?api_key=$API_KEY")
+    @GET("/planetary/apod?api_key=lpUUk8oiNMul7KLrkOj68TV7Z9QgROkj4jefnCGD")
     suspend fun getMedia(
         @Query("start_date") startDate: String,
         @Query("end_date") endDate: String,
