@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Nasa Gallery</string>
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="video">Video</string>
+    <string name="try_again">Try again</string>
+    <string name="unknown_error">Something went wrong. Please try again later.</string>
+    <string name="lorem_ipsum">Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Donec vitae arcu. Vivamus luctus egestas leo. Aenean vel massa quis mauris vehicula lacinia. Nullam rhoncus aliquam metus. Vestibulum fermentum tortor id mi. Praesent vitae arcu tempor neque lacinia pretium. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Vivamus luctus egestas leo. In convallis. Donec quis nibh at felis congue commodo. Nulla est. In laoreet, magna id viverra tincidunt, sem odio bibendum justo, vel imperdiet sapien wisi sed libero. Aliquam ornare wisi eu metus.</string>
+</resources>
