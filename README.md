@@ -1,10 +1,11 @@
 <br />
 <div align="center">
   
-<img src="logo3.png" alt="Logo" width="120" height="120">
+<img src="logo3.png" alt="Logo" width="250" height="250">
 
-<h2 align="center">Nasa Gallery</h3>
+<h3 align="center">Nasa Gallery</h3>
 </div>
+<br />
 
 ## About The Project
 
@@ -26,10 +27,10 @@ The app consumes [nasa apod api](https://github.com/nasa/apod-api)
 ### Screens
 
 The app has two screens. Home screen displays list of image (or video) thumbnails.
-When a user clicks on any of them the Detail screen is shown, which contains extensive
+When user clicks on any of them the Detail screen is shown, which contains extensive
 description of the image.
 
 <p align="middle">
-  <img src="/screenshots/home_screen.png" width="350" />
-  <img src="/screenshots/detail_screen.png" width="350" />
+  <img src="/screenshots/home_screen.png" width="370" />
+  <img src="/screenshots/detail_screen.png" width="370" />
 </p>
