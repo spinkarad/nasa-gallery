@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace 'app.nasagallery'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "app.nasagallery"
         minSdk 24
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -26,11 +26,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
     }
 
     buildFeatures {
@@ -47,13 +47,13 @@ android {
     // For KSP
     applicationVariants.configureEach { variant ->
         kotlin.sourceSets {
-            getByName(name) {
+            named(name){
                 kotlin.srcDir("build/generated/ksp/${variant.name}/kotlin")
             }
         }
     }
 }
-kotlin.sourceSets.all {
+kotlin.sourceSets.configureEach {
     it.languageSettings.enableLanguageFeature("DataObjects")
 }
 
@@ -63,7 +63,6 @@ dependencies {
 
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation "androidx.compose.material3:material3:1.1.0"
     implementation "androidx.compose.material3:material3-window-size-class:1.1.0"
     implementation "com.jakewharton.timber:timber:5.0.1"
