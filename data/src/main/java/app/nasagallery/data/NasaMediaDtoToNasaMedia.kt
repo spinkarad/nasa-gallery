@@ -13,24 +13,36 @@ class NasaMediaDtoToNasaMedia : Mapper<List<NasaMediaDto>, Result<List<NasaMedia
     override suspend fun map(from: List<NasaMediaDto>) = runCatching {
         from.map { dto ->
             with(dto) {
-                val url = MediaUrl(url)
                 val title = MediaTitle(title)
                 val explanation = MediaExplanation(explanation)
                 val date = LocalDate.parse(date)
                 when (mediaType) {
-                    MediaType.VIDEO -> NasaMedia.Video(
-                        MediaId(date.toString()),
-                        date,
-                        url,
-                        title,
-                        explanation,
-                        MediaUrl(thumbnailUrl.orEmpty())
-                    )
+                    MediaType.VIDEO -> {
+                        requireNotNull(url)
+                        NasaMedia.Video(
+                            MediaId(date.toString()),
+                            date,
+                            MediaUrl(url),
+                            title,
+                            explanation,
+                            MediaUrl(thumbnailUrl.orEmpty())
+                        )
+                    }
 
-                    MediaType.IMAGE -> NasaMedia.Image(
+                    MediaType.IMAGE -> {
+                        requireNotNull(url)
+                        NasaMedia.Image(
+                            MediaId(date.toString()),
+                            date,
+                            MediaUrl(url),
+                            title,
+                            explanation
+                        )
+                    }
+
+                    MediaType.OTHER -> NasaMedia.Other(
                         MediaId(date.toString()),
                         date,
-                        url,
                         title,
                         explanation
                     )

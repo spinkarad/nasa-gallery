@@ -1,41 +1,33 @@
 package app.nasagallery
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.ripple.LocalRippleTheme
 import androidx.compose.material.ripple.RippleAlpha
-import androidx.compose.material.ripple.RippleTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RippleConfiguration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import app.nasagallery.common.MaterialColors
 import app.nasagallery.common.get
 
+@OptIn(ExperimentalMaterial3Api::class)
+private val NasaGalleryRippleConfiguration =
+    RippleConfiguration(
+        color = MaterialColors.DeepPurple[300],
+        rippleAlpha = RippleAlpha(0f, 0f, 0f, 0.3f)
+    )
+
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NasaGalleryTheme(
     content: @Composable () -> Unit
 ) {
     MaterialTheme {
         CompositionLocalProvider(
-            LocalRippleTheme provides NasaGalleryRippleTheme,
+            LocalRippleConfiguration provides NasaGalleryRippleConfiguration,
             content = content
         )
     }
 }
 
-
-private object NasaGalleryRippleTheme : RippleTheme {
-
-    @Composable
-    override fun defaultColor() =
-        RippleTheme.defaultRippleColor(
-            MaterialColors.Red[600],
-            lightTheme = true
-        )
-
-    @Composable
-    override fun rippleAlpha(): RippleAlpha =
-        RippleTheme.defaultRippleAlpha(
-            MaterialColors.Red[600].copy(0.3f),
-            lightTheme = true
-        )
-}

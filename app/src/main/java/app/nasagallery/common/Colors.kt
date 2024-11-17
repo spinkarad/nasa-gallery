@@ -282,3 +282,13 @@ object MaterialColors {
         `900` = Color(0xFF263238)
     )
 }
+
+val Color.alpha10 get() = copy(alpha = 0.1f)
+val Color.alpha20 get() = copy(alpha = 0.2f)
+val Color.alpha30 get() = copy(alpha = 0.3f)
+val Color.alpha40 get() = copy(alpha = 0.4f)
+val Color.alpha50 get() = copy(alpha = 0.5f)
+val Color.alpha60 get() = copy(alpha = 0.6f)
+val Color.alpha70 get() = copy(alpha = 0.7f)
+val Color.alpha80 get() = copy(alpha = 0.8f)
+val Color.alpha90 get() = copy(alpha = 0.9f)

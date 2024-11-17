@@ -10,24 +10,30 @@ import kotlinx.datetime.LocalDate
 sealed interface NasaMedia {
     val id: MediaId
     val date: LocalDate
-    val url: MediaUrl
     val title: MediaTitle
     val explanation: MediaExplanation
 
-    class Image(
+    data class Image(
         override val id: MediaId,
         override val date: LocalDate,
-        override val url: MediaUrl,
+        val url: MediaUrl,
         override val title: MediaTitle,
         override val explanation: MediaExplanation,
     ) : NasaMedia
 
-    class Video(
+    data class Video(
         override val id: MediaId,
         override val date: LocalDate,
-        override val url: MediaUrl,
+        val url: MediaUrl,
         override val title: MediaTitle,
         override val explanation: MediaExplanation,
         val thumbnailUrl: MediaUrl,
+    ) : NasaMedia
+
+    data class Other(
+        override val id: MediaId,
+        override val date: LocalDate,
+        override val title: MediaTitle,
+        override val explanation: MediaExplanation
     ) : NasaMedia
 }

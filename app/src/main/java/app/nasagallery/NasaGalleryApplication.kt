@@ -2,7 +2,6 @@ package app.nasagallery
 
 import android.app.Application
 import app.nasagallery.di.AppModule
-import org.koin.android.BuildConfig
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin

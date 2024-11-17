@@ -1,5 +1,7 @@
 package app.nasagallery.common.entity
 
+import androidx.annotation.DrawableRes
+
 @JvmInline
 value class MediaId(val value: String)
 

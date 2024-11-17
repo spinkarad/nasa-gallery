@@ -1,17 +1,19 @@
 package app.nasagallery.detail
 
+import android.R.attr.navigationIcon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.mandatorySystemGestures
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.Scaffold
@@ -20,25 +22,31 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import app.nasagallery.NasaGalleryTheme
 import app.nasagallery.R
 import app.nasagallery.common.CommonAsyncImage
 import app.nasagallery.common.CommonIcon
+import app.nasagallery.common.ImageResource
 import app.nasagallery.common.MaterialColors
+import app.nasagallery.common.PreviewData
 import app.nasagallery.common.VerticalGradient
+import app.nasagallery.common.alpha60
+import app.nasagallery.common.alpha70
 import app.nasagallery.common.entity.MediaExplanation
 import app.nasagallery.common.entity.MediaId
 import app.nasagallery.common.entity.MediaTitle
 import app.nasagallery.common.entity.MediaUrl
 import app.nasagallery.common.get
+import app.nasagallery.common.isNotNull
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import org.koin.androidx.compose.koinViewModel
@@ -57,14 +65,22 @@ private fun DetailScreenContent(state: DetailUIState) {
     NasaGalleryTheme {
         Scaffold(
             topBar = { DetailTopBar(state.title.value) },
-            containerColor = Color.Black
+            containerColor = Color.Black,
         ) { innerPadding ->
-            DetailColumn(Modifier.padding(innerPadding)) {
-                Box {
-                    Image(state.url.value)
+            DetailColumn() {
+                val url = state.url?.value
+                Box(Modifier.padding(top = innerPadding.calculateTopPadding())) {
+                    if (url.isNotNull()) Image(url)
                     GradientBox(Modifier.align(Alignment.BottomCenter))
+                    GradientBox(
+                        Modifier
+                            .rotate(180f)
+                            .align(Alignment.TopCenter))
                 }
-                Explanation(state.explanation.value)
+                Explanation(
+                    state.explanation.value,
+                    modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
+                )
             }
         }
     }
@@ -75,21 +91,18 @@ private fun DetailScreenContent(state: DetailUIState) {
 private fun DetailTopBar(text: String) {
     val navigator = LocalNavigator.current
     LargeTopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Black,
-            navigationIconContentColor = MaterialColors.Red[600],
-        ),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black.alpha70),
         navigationIcon = {
             IconButton(onClick = { navigator?.pop() }) {
-                CommonIcon(R.drawable.arrow_back)
+                CommonIcon(R.drawable.arrow_back, tint = MaterialColors.Gray[700])
             }
         },
         title = {
             Text(
                 text = text,
-                fontSize = 32.sp,
-                color = MaterialColors.Red[600],
-                fontWeight = FontWeight(900),
+                fontSize = 28.sp,
+                color = MaterialColors.DeepPurple[200],
+                fontWeight = FontWeight(700),
             )
         },
     )
@@ -112,11 +125,11 @@ private fun Image(url: String, modifier: Modifier = Modifier) =
         model = url,
         modifier.fillMaxWidth(),
         contentScale = ContentScale.FillWidth,
-        previewPlaceholderRes = R.drawable.planet
+        previewPlaceholderRes = R.drawable.ic_planet
     )
 
 @Composable
-private fun Explanation(text: String, modifier: Modifier = Modifier) = Text(
+private fun Explanation(text: String, modifier: Modifier = Modifier) = LinkifyText(
     text = text,
     fontSize = 15.sp,
     color = MaterialColors.Gray[600],
@@ -128,7 +141,7 @@ private fun Explanation(text: String, modifier: Modifier = Modifier) = Text(
 @Composable
 private fun GradientBox(modifier: Modifier = Modifier) = Box(
     modifier = modifier
-        .requiredHeight(48.dp)
+        .requiredHeight(40.dp)
         .fillMaxWidth()
         .background(VerticalGradient.transparentToBlack)
 )

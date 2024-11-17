@@ -7,7 +7,7 @@ import app.nasagallery.common.entity.MediaUrl
 data class NasaMediaDomain(
     val id: MediaId,
     val day: Day,
-    val imageUrl: MediaUrl,
+    val imageUrl: MediaUrl?,
     val title: MediaTitle,
     val isVideo: Boolean,
 )

@@ -4,15 +4,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.nasagallery.R
 import app.nasagallery.common.ConnectionError
+import app.nasagallery.common.ImageResource
 import app.nasagallery.common.StringHolder
-import app.nasagallery.data.MediaRepository
 import app.nasagallery.domain.GetMediaUseCase
 import app.nasagallery.domain.entity.Day
 import app.nasagallery.domain.entity.NasaMediaDomain
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
 @KoinViewModel
@@ -20,13 +26,15 @@ class HomeViewModel(
     private val getMedia: GetMediaUseCase
 ) : ViewModel() {
 
-    init {
-        getData()
-    }
+    private val mediaLoadingCount = MutableStateFlow(0)
 
-    private val _viewState: MutableStateFlow<HomeUIState> =
-        MutableStateFlow(HomeUIState.Loading.Initial)
-    val viewState = _viewState.asStateFlow()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val viewState: StateFlow<HomeUIState> = mediaLoadingCount.flatMapLatest {
+        flow {
+            emit(getLoadingState())
+            emit(getMedia().fold(::onSuccess, ::onFailure))
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUIState.Loading.Initial)
 
     fun onScrollPositionChange(lastVisible: Int?) {
         val state = (viewState.value as? HomeUIState.Success) ?: return
@@ -35,71 +43,69 @@ class HomeViewModel(
         if (shouldGetNextData) requestData()
     }
 
-    fun requestData() {
-        when (viewState.value) {
-            is HomeUIState.Error.Initial -> setInitialLoading()
-            is HomeUIState.Error.Sequential -> setSequentialLoading()
-            is HomeUIState.Success -> setSequentialLoading()
-            is HomeUIState.Loading -> {}
+    fun requestData() = mediaLoadingCount.update { it + 1 }
+
+    private fun getLoadingState(): HomeUIState.Loading {
+        val currentState = viewState.value
+        return when (currentState) {
+            HomeUIState.Loading.Initial,
+            is HomeUIState.Error.Initial -> HomeUIState.Loading.Initial
+
+            is HomeUIState.Error.Sequential,
+            is HomeUIState.Loading.Sequential,
+            is HomeUIState.Success -> {
+                val newItems = currentState.items.filterMedia() + GalleryItem.Skeleton()
+                HomeUIState.Loading.Sequential(newItems)
+            }
         }
-        getData()
     }
 
-    private fun setInitialLoading() = _viewState.update { HomeUIState.Loading.Initial }
-
-    private fun setSequentialLoading() = _viewState.update {
-        val newItems = it.items.filterIsInstance<MediaItem.Image>() + MediaItem.Skeleton()
-        HomeUIState.Loading.Sequential(newItems)
-    }
-
-    private fun getData() =
-        viewModelScope.launch {
-            getMedia()
-                .onFailure(::onFailure)
-                .onSuccess(::onSuccess)
-        }
-
-    private fun onFailure(error: Throwable) {
-        val loadingState = _viewState.value as? HomeUIState.Loading ?: return
+    private fun onFailure(error: Throwable): HomeUIState {
+        val items = viewState.value.items.filterMedia()
+        val loadingState =
+            viewState.value as? HomeUIState.Loading ?: return HomeUIState.Success(items)
         val canTryAgain = error is ConnectionError
-        when (loadingState) {
-            is HomeUIState.Loading.Initial -> _viewState.update {
+        return when (loadingState) {
+            is HomeUIState.Loading.Initial -> {
                 HomeUIState.Error.Initial(
                     StringHolder.Resource(R.string.unknown_error), canTryAgain
                 )
             }
 
-            is HomeUIState.Loading.Sequential -> _viewState.update {
+            is HomeUIState.Loading.Sequential -> {
                 val stringHolder = StringHolder.Resource(R.string.unknown_error)
-                val errorItem = MediaItem.Error(stringHolder, canTryAgain)
-                val newItems = it.items.filterIsInstance<MediaItem.Image>() + errorItem
-                HomeUIState.Error.Sequential(newItems)
+                val errorItem = GalleryItem.Error(stringHolder, canTryAgain)
+                HomeUIState.Error.Sequential(items + errorItem)
             }
         }
     }
 
-    private fun onSuccess(data: List<NasaMediaDomain>) {
-        _viewState.update {
-            HomeUIState.Success(
-                data.map { media ->
-                    val dateStringHolder = when (val day = media.day) {
-                        Day.Today -> StringHolder.Resource(R.string.today)
-                        Day.Yesterday -> StringHolder.Resource(R.string.yesterday)
-                        is Day.Other -> StringHolder.Value(day.date)
-                    }
-                    with(media) {
-                        MediaItem.Image(
-                            id,
-                            day is Day.Today,
-                            dateStringHolder,
-                            title,
-                            imageUrl,
-                            isVideo,
-                        )
-                    }
-                })
-        }
-    }
+    private fun onSuccess(data: List<NasaMediaDomain>): HomeUIState.Success =
+        HomeUIState.Success(
+            data.map { media ->
+                val dateStringHolder = when (val day = media.day) {
+                    Day.Today -> StringHolder.Resource(R.string.today)
+                    Day.Yesterday -> StringHolder.Resource(R.string.yesterday)
+                    is Day.Other -> StringHolder.Value(day.date)
+                }
+
+                with(media) {
+                    val imageResource = imageUrl?.value
+                        ?.let(ImageResource::Url)
+                        ?: ImageResource.Drawable(R.drawable.ic_planet)
+                    GalleryItem.Media(
+                        id,
+                        day is Day.Today,
+                        dateStringHolder,
+                        title,
+                        imageResource,
+                        isVideo,
+                    )
+                }
+            }
+        )
+
+    private fun List<GalleryItem>.filterMedia() = filterIsInstance<GalleryItem.Media>()
 
     companion object {
         const val ITEMS_TO_END_FETCH_THRESHOLD = 5

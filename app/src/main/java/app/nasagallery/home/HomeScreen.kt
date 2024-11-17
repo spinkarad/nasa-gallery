@@ -12,10 +12,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -48,12 +47,19 @@ import app.nasagallery.NasaGalleryTheme
 import app.nasagallery.R
 import app.nasagallery.common.CommonAsyncImage
 import app.nasagallery.common.CommonIcon
+import app.nasagallery.common.HorizontalSpacer
+import app.nasagallery.common.ImageResource
 import app.nasagallery.common.MaterialColors
+import app.nasagallery.common.PreviewData
 import app.nasagallery.common.StringHolder
 import app.nasagallery.common.VerticalGradient
+import app.nasagallery.common.VerticalSpacer
+import app.nasagallery.common.alpha10
+import app.nasagallery.common.alpha30
+import app.nasagallery.common.alpha50
+import app.nasagallery.common.alpha70
 import app.nasagallery.common.entity.MediaId
 import app.nasagallery.common.entity.MediaTitle
-import app.nasagallery.common.entity.MediaUrl
 import app.nasagallery.common.get
 import app.nasagallery.common.lastVisibleItem
 import app.nasagallery.detail.DetailScreen
@@ -90,7 +96,7 @@ private fun HomeScreenContent(
     NasaGalleryTheme {
         Scaffold(
             topBar = { HomeTopBar() },
-            containerColor = Color.Black
+            containerColor = Color.Black,
         ) { innerPadding ->
 
             when (state) {
@@ -98,39 +104,42 @@ private fun HomeScreenContent(
                     ErrorContent(
                         text = state.text.string,
                         modifier = Modifier.padding(innerPadding),
-                        canTryAgain = state.canTryAgain ,
+                        canTryAgain = state.canTryAgain,
                         isFullScreen = true,
                         onTryAgainClick = onTryAgainClick,
                     )
 
                 else -> {
                     val listState = rememberLazyListState()
+
+                    val contentPadding = PaddingValues(
+                        16.dp,
+                        innerPadding.calculateTopPadding(),
+                        16.dp,
+                        16.dp
+                    )
                     LazyColumn(
                         state = listState,
                         verticalArrangement = Arrangement.spacedBy(16.dp),
-                        contentPadding = PaddingValues(vertical = 16.dp, horizontal = 16.dp),
-                        modifier = Modifier.padding(innerPadding),
+                        contentPadding = contentPadding,
                     ) {
                         items(state.items) { item ->
                             when (item) {
-                                is MediaItem.Image -> ImageItem(
+                                is GalleryItem.Media -> ImageItem(
                                     item,
                                     listState,
                                     onItemClick,
                                     onScrollPositionChange,
                                 )
 
-                                is MediaItem.Skeleton -> ItemCard(item)
-                                is MediaItem.Error -> ItemCard(item) {
-                                    Box(Modifier.fillMaxSize()) {
-                                        ErrorContent(
-                                            item.text.string,
-                                            item.canTryAgain,
-                                            false,
-                                            onTryAgainClick = onTryAgainClick,
-                                            modifier = Modifier.align(Alignment.Center),
-                                        )
-                                    }
+                                is GalleryItem.Skeleton -> ItemCard(item)
+                                is GalleryItem.Error -> ItemCard(item) {
+                                    ErrorContent(
+                                        item.text.string,
+                                        item.canTryAgain,
+                                        false,
+                                        onTryAgainClick = onTryAgainClick,
+                                    )
                                 }
                             }
                         }
@@ -145,12 +154,12 @@ private fun HomeScreenContent(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun HomeTopBar() =
     TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black.alpha70),
         title = {
             Text(
                 text = stringResource(R.string.app_name),
                 fontSize = 32.sp,
-                color = MaterialColors.DeepPurple[300],
+                color = MaterialColors.DeepPurple[100],
                 fontWeight = FontWeight(900),
             )
         },
@@ -158,7 +167,7 @@ private fun HomeTopBar() =
 
 @Composable
 private fun ImageItem(
-    item: MediaItem.Image,
+    item: GalleryItem.Media,
     listState: LazyListState, onItemClick: (MediaId) -> Unit,
     onScrollPositionChange: (Int) -> Unit,
 ) {
@@ -170,11 +179,11 @@ private fun ImageItem(
     }
     ItemCard(item, onClick = onClick) {
         Box {
-            Image(item.imgUrl.value)
+            Image(item.imageResource)
             ImageInfoColumn(Modifier.align(Alignment.BottomStart)) {
                 Row {
                     Date(item.date.string)
-                    Spacer(modifier = Modifier.width(8.dp))
+                    HorizontalSpacer(8.dp)
                     if (item.isVideo) VideoBadge()
                 }
                 ImageTitle(item.title.value)
@@ -184,18 +193,18 @@ private fun ImageItem(
 }
 
 @Composable
-private fun Image(url: String, modifier: Modifier = Modifier) =
+private fun Image(imageResource: ImageResource, modifier: Modifier = Modifier) =
     CommonAsyncImage(
-        model = url,
+        model = imageResource.model,
         modifier.fillMaxWidth(),
         contentScale = ContentScale.Crop,
-        previewPlaceholderRes = R.drawable.planet
+        previewPlaceholderRes = R.drawable.ic_planet
     )
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun ItemCard(
-    item: MediaItem,
+    item: GalleryItem,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit) = {},
     content: @Composable ColumnScope.() -> Unit = {}
@@ -205,12 +214,12 @@ private fun ItemCard(
         .fillMaxWidth()
         .requiredHeight(item.height)
         .placeholder(
-            item is MediaItem.Skeleton,
+            item is GalleryItem.Skeleton,
             MaterialColors.Gray[900],
             RoundedCornerShape(16.dp),
             PlaceholderHighlight.shimmer(MaterialColors.Gray[800]),
         ),
-    border = BorderStroke(2.dp, item.highLightColor),
+    border = BorderStroke(1.dp, item.highLightColor),
     onClick = onClick,
     content = content,
 )
@@ -222,42 +231,53 @@ private fun ErrorContent(
     isFullScreen: Boolean,
     modifier: Modifier = Modifier,
     onTryAgainClick: () -> Unit,
-) = Column(
-    horizontalAlignment = Alignment.CenterHorizontally,
-    modifier = modifier,
-) {
-    val darkOrangeColor = MaterialColors.DeepOrange[900]
-    val yellow = MaterialColors.Yellow[300].copy(alpha = .7f)
-    if (isFullScreen) {
-        Spacer(Modifier.height(96.dp))
-        CommonIcon(
-            R.drawable.error_outline,
-            tint = darkOrangeColor.copy(alpha = .6f),
+) = Column(modifier = modifier.fillMaxSize()) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.weight(1f),
+    ) {
+        val textColor = MaterialColors.Gray[400]
+        val warningColor = MaterialColors.Red[800]
+        if (isFullScreen) {
+            Box(
+                Modifier.background(warningColor.alpha10, RoundedCornerShape(20.dp))
+            ) {
+                CommonIcon(
+                    R.drawable.ic_warning,
+                    tint = warningColor.alpha30,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .requiredSize(56.dp)
+                )
+            }
+            VerticalSpacer(16.dp)
+        }
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 40.dp),
+            fontWeight = FontWeight(500),
+            fontSize = 20.sp,
+            color = textColor,
+            textAlign = TextAlign.Center,
         )
-    }
-    Text(
-        text = text,
-        modifier = Modifier.padding(horizontal = 40.dp),
-        fontWeight = FontWeight(500),
-        fontSize = 22.sp,
-        color = yellow,
-        textAlign = TextAlign.Center,
-    )
-    if (canTryAgain) {
-        Spacer(Modifier.height(if (isFullScreen) 16.dp else 4.dp))
-        OutlinedButton(
-            border = BorderStroke(2.dp, darkOrangeColor.copy(alpha = .2f)),
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-            onClick = onTryAgainClick
-        ) {
-            Text(
-                text = stringResource(R.string.try_again),
-                fontSize = 17.sp,
-                color = darkOrangeColor,
-                fontWeight = FontWeight(900)
-            )
+        if (canTryAgain) {
+            VerticalSpacer(if (isFullScreen) 16.dp else 4.dp)
+            OutlinedButton(
+                border = BorderStroke(1.dp, textColor.alpha30),
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                onClick = onTryAgainClick
+            ) {
+                Text(
+                    text = stringResource(R.string.try_again),
+                    fontSize = 17.sp,
+                    color = textColor,
+                    fontWeight = FontWeight(900)
+                )
+            }
         }
     }
+    if (isFullScreen) Spacer(Modifier.weight(0.5f))
 }
 
 @Composable
@@ -269,21 +289,21 @@ private fun ImageInfoColumn(
         .fillMaxWidth()
         .background(VerticalGradient.transparentToDarkGray)
         .padding(12.dp)
-        .padding(top = 56.dp),
+        .padding(top = 48.dp),
     content = content,
 )
 
 @Composable
 private fun ImageTitle(text: String, modifier: Modifier = Modifier) = Text(
     text,
-    fontWeight = FontWeight(900),
-    fontSize = 18.sp,
-    color = MaterialColors.Red[600],
+    fontWeight = FontWeight(500),
+    fontSize = 17.sp,
+    color = MaterialColors.DeepPurple[100],
     modifier = modifier
 )
 
 @Composable
-private fun Date(text: String) = Badge(text, MaterialColors.Gray[400])
+private fun Date(text: String) = Badge(text, MaterialColors.Gray[200])
 
 @Composable
 private fun VideoBadge() = Badge(stringResource(R.string.video), MaterialColors.Cyan[100])
@@ -295,7 +315,7 @@ private fun Badge(text: String, color: Color, modifier: Modifier = Modifier) = T
     fontSize = 14.sp,
     color = color,
     modifier = modifier
-        .border(1.dp, color.copy(alpha = .5f), RoundedCornerShape(8.dp))
+        .border(1.dp, color.alpha50, RoundedCornerShape(8.dp))
         .padding(horizontal = 6.dp, vertical = 2.dp),
 )
 
@@ -304,28 +324,28 @@ private fun Badge(text: String, color: Color, modifier: Modifier = Modifier) = T
 private fun SuccessPreview() {
     val previewState = HomeUIState.Success(
         listOf(
-            MediaItem.Image(
+            GalleryItem.Media(
                 id = MediaId(""),
                 isToday = true,
                 date = StringHolder.Resource(R.string.today),
                 title = MediaTitle("Title"),
-                imgUrl = MediaUrl(""),
+                imageResource = PreviewData.image,
                 isVideo = false,
             ),
-            MediaItem.Image(
+            GalleryItem.Media(
                 id = MediaId(""),
                 isToday = false,
                 date = StringHolder.Resource(R.string.yesterday),
                 title = MediaTitle("Title2"),
-                imgUrl = MediaUrl(""),
+                imageResource = PreviewData.image,
                 isVideo = false
             ),
-            MediaItem.Image(
+            GalleryItem.Media(
                 id = MediaId(""),
                 isToday = false,
                 date = StringHolder.Value("2023-05-17"),
                 title = MediaTitle("Title3"),
-                imgUrl = MediaUrl(""),
+                imageResource = PreviewData.image,
                 isVideo = true
             ),
         )
@@ -337,6 +357,24 @@ private fun SuccessPreview() {
 @Preview
 private fun InitialLoadingPreview() {
     HomeScreenContent(HomeUIState.Loading.Initial, {}, {}, {})
+}
+
+@Composable
+@Preview
+private fun SequentialErrorPreview() {
+    HomeScreenContent(HomeUIState.Loading.Sequential(
+        listOf(
+            GalleryItem.Media(
+                id = MediaId(""),
+                isToday = false,
+                date = StringHolder.Resource(R.string.yesterday),
+                title = MediaTitle("Title2"),
+                imageResource = PreviewData.image,
+                isVideo = false
+            ),
+            GalleryItem.Error(StringHolder.Resource(R.string.unknown_error), true)
+        )
+    ), {}, {}, {})
 }
 
 @Composable
