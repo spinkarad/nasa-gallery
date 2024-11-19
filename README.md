@@ -1,7 +1,7 @@
 <br />
 <div align="center">
   
-<img src="logo3.png" alt="Logo" width="250" height="250">
+<img src="logo3.webp" alt="Logo" width="250" height="250">
 
 <h3 align="center">Nasa Gallery</h3>
 </div>
